@@ -1,0 +1,228 @@
+@import "tailwindcss";
+
+/*
+  Dark-first product surface. The chart series tokens are the validated
+  dark-mode categorical palette — do not re-pick them by eye; re-run the
+  palette validator against --surface-1 if they ever change.
+*/
+:root {
+  color-scheme: dark;
+
+  --plane: #08080a;
+  --surface-1: #141416;
+  --surface-2: #1b1b1f;
+  --surface-3: #232329;
+
+  --text-primary: #f7f7f5;
+  --text-secondary: #a8a7a1;
+  --text-muted: #75746f;
+
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --grid: #26262a;
+  --axis: #3a3a40;
+
+  /* Validated categorical palette (dark steps, surface #141416) */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  /* Sequential blue ramp */
+  --seq-100: #cde2fb;
+  --seq-250: #86b6ef;
+  --seq-400: #3987e5;
+  --seq-550: #1c5cab;
+  --seq-700: #0d366b;
+
+  /* Status — fixed, never reused as a series colour */
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+
+  --accent: #3987e5;
+  --accent-soft: rgba(57, 135, 229, 0.14);
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--plane);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Ambient glow behind the hero, and a faint engineering grid over the page. */
+.page-backdrop::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 32rem at 50% -12rem, rgba(57, 135, 229, 0.16), transparent 70%),
+    radial-gradient(44rem 28rem at 88% 4rem, rgba(213, 81, 129, 0.09), transparent 70%);
+}
+
+.page-backdrop::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(70rem 46rem at 50% 0%, #000 10%, transparent 78%);
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.card-quiet {
+  background: color-mix(in oklab, var(--surface-1) 70%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.gradient-text {
+  background: linear-gradient(100deg, #ffffff 8%, #86b6ef 46%, #d55181 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Focus ring that survives the dark surface */
+:where(button, a, input, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+::selection {
+  background: rgba(57, 135, 229, 0.32);
+}
+
+/* Scrollbars — the product has a lot of tall panels */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 999px;
+  border: 2px solid var(--plane);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #35353d;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(57, 135, 229, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(57, 135, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(57, 135, 229, 0);
+  }
+}
+
+.pulse-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Recharts overrides — keep chrome recessive */
+.recharts-cartesian-grid line {
+  stroke: var(--grid);
+}
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--axis);
+}
+.recharts-text {
+  fill: var(--text-muted);
+}
+.recharts-surface:focus {
+  outline: none;
+}
