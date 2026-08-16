@@ -122,6 +122,19 @@ tokopedia.com/erigo/kaos-polos-hitam            → tokopedia/erigo
 blibli.com/merchant/erigo-official/ERI-60002    → blibli/erigo-official
 ```
 
+**Share links** are what the marketplace apps' share sheets actually produce,
+and they carry no seller id at all — `id.shp.ee/DRrKeeuk` is just an opaque
+code. Those are followed server-side before parsing, one hop at a time, with
+loop and hop-limit guards:
+
+```
+id.shp.ee/DRrKeeuk       shp.ee   shope.ee
+vt.tiktok.com/ZS2abc     vm.tiktok.com     tokopedia.link/xyz
+```
+
+Redirects, `<meta http-equiv="refresh">` and JS `location` hops are all
+handled, since different shorteners use different mechanisms.
+
 ## Project layout
 
 ```
@@ -141,31 +154,83 @@ src/
       tiktok.ts      Open API → Apify → profile JSON
       tokopedia.ts   gql.tokopedia.com
       blibli.ts      REST search backend
+      shortlink.ts   share-link (shp.ee, vt.tiktok.com) redirect following
       sample.ts      deterministic mock catalogue
-  components/        dashboard, charts, compare board
-tests/               node:test suites for the parser and metrics
+  components/
+    brand-icons.tsx  vendored marketplace marks (inline SVG)
+    …                dashboard, charts, compare board
+scripts/backtest.mjs end-to-end backtest CLI
+tests/               node:test suites — parser, share links, metrics, backtest
 ```
 
 ## Development
 
 ```bash
 npm run dev        # dev server
-npm run test       # node:test — URL parsing + revenue model
+npm run test       # node:test — parsing, share links, revenue model, backtest
 npm run typecheck  # tsc --noEmit
 npm run build      # production build
 npm run check      # all three
+npm run backtest   # end-to-end backtest against a running server
 ```
 
 Tests run on Node's built-in TypeScript stripping, so there is no test-runner
 dependency.
 
-## Charts
+### Backtesting
+
+Revenue figures are only worth reading if the arithmetic behind them holds for
+every catalogue shape, not just the tidy ones. Two layers check that.
+
+**`tests/backtest.test.ts`** generates 2,000 randomly shaped catalogues per run
+— zero prices, zero sales, missing categories, missing dates, absurd
+magnitudes, single-listing stores — and asserts the invariants that must hold
+for any input:
+
+- totals reconcile: `kpi.estimatedRevenue === Σ product revenue`
+- revenue shares sum to 1, and products are ranked by revenue
+- price bands and categories conserve every listing and every rupiah
+- the category fold never exceeds the 8-series palette cap
+- the timeline is always 12 ascending months of finite, non-negative values
+- every ratio stays in `[0, 1]`; nothing anywhere is `NaN` or negative
+- sample data always scores exactly zero confidence
+- no insight string ever leaks `NaN`/`Infinity`/`undefined`
+
+The generator is seeded, so a failure reproduces exactly and the seed is
+printed with the assertion. Raise the run count with `BACKTEST_RUNS=20000`.
+
+**`npm run backtest`** does the same against a running server, so it covers the
+whole path — URL parsing, adapter dispatch, fallback, serialisation — rather
+than the model alone:
+
+```bash
+npm run backtest                          # 40 random stores on localhost:3000
+npm run backtest -- --runs 200 --seed 7   # reproducible larger sweep
+npm run backtest -- --base https://…      # a deployed instance
+npm run backtest -- --live                # allow live scraping, not just samples
+```
+
+It prints a per-run table plus latency percentiles and exits non-zero on any
+invariant breach, so it doubles as a CI gate.
+
+## Charts and brand marks
 
 Chart colours come from a validated categorical palette rather than brand
 colours — Shopee orange, TikTok red and Tokopedia green fail colour-blind
-separation badly when used as data series. Brand colours appear only on
-platform badges, always paired with the platform name. Every chart has a table
-view for the cases where colour cannot be relied on at all.
+separation badly when used as data series (Shopee vs Tokopedia measures ΔE 1.1
+under deuteranopia). Brand colours appear only on platform badges and icons,
+always paired with the platform name, and every chart has a table view for the
+cases where colour cannot be relied on at all.
+
+Platform icons are vendored as inline SVG in `src/components/brand-icons.tsx`,
+so nothing is hotlinked from a third-party CDN:
+
+| Platform | Mark |
+|---|---|
+| Shopee | Simple Icons (CC0-1.0) |
+| TikTok | Simple Icons (CC0-1.0) |
+| Blibli | Simple Icons (CC0-1.0) |
+| Tokopedia | generic shopping-bag glyph — Simple Icons does not carry Tokopedia, and an approximated logo would be worse than an honestly generic one |
 
 ## Notes on responsible use
 

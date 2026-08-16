@@ -3,8 +3,9 @@
 import { ArrowRight, Link2, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { PLATFORM_LIST, tryParseStoreUrl } from "@/lib/platform";
+import { isShortLink, PLATFORM_LIST, tryParseStoreUrl } from "@/lib/platform";
 
+import { BrandIcon } from "./brand-icons";
 import { PlatformBadge } from "./ui";
 
 export function StoreInput({
@@ -18,7 +19,10 @@ export function StoreInput({
 }) {
   const [value, setValue] = useState(defaultValue);
   const detected = useMemo(() => (value.trim() ? tryParseStoreUrl(value) : null), [value]);
-  const invalid = value.trim().length > 6 && !detected;
+  // A share link is valid input even though it cannot be parsed here — the
+  // server follows the redirect before reading it.
+  const short = useMemo(() => (value.trim() ? isShortLink(value) : false), [value]);
+  const invalid = value.trim().length > 6 && !detected && !short;
 
   return (
     <div className="w-full">
@@ -72,6 +76,10 @@ export function StoreInput({
           <p className="text-xs text-[var(--critical)]">
             Not a recognised marketplace link. Supported: {PLATFORM_LIST.map((p) => p.label).join(", ")}.
           </p>
+        ) : short ? (
+          <p className="mono text-[11px] text-[var(--text-muted)]">
+            → share link, will be opened to find the store
+          </p>
         ) : detected ? (
           <p className="mono text-[11px] text-[var(--text-muted)]">
             → {detected.platform}/{detected.handle}
@@ -93,7 +101,7 @@ export function StoreInput({
             className="group inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-1)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-40"
             title={meta.hint}
           >
-            <span aria-hidden className="size-1.5 rounded-full" style={{ background: meta.brand }} />
+            <BrandIcon platform={meta.id} className="size-3.5" style={{ color: meta.brand }} />
             {meta.label}
             {meta.flagship ? (
               <span className="rounded bg-[var(--accent-soft)] px-1 text-[9px] uppercase tracking-wide text-[#86b6ef]">

@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { PLATFORM_META } from "@/lib/platform";
 import type { Platform } from "@/lib/types";
 
+import { BrandIcon } from "./brand-icons";
+
 export function Card({
   children,
   className = "",
@@ -57,10 +59,10 @@ export function PlatformBadge({ platform, size = "md" }: { platform: Platform; s
         color: "var(--text-primary)",
       }}
     >
-      <span
-        aria-hidden
-        className="size-1.5 rounded-full"
-        style={{ background: meta.brand }}
+      <BrandIcon
+        platform={platform}
+        className={size === "sm" ? "size-3" : "size-3.5"}
+        style={{ color: meta.brand }}
       />
       {meta.label}
     </span>

@@ -3,6 +3,7 @@
 import { Activity, Github, Layers, Radio, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { BrandIcon } from "@/components/brand-icons";
 import { CompareBoard } from "@/components/CompareBoard";
 import { Dashboard } from "@/components/Dashboard";
 import { PipelineConsole } from "@/components/PipelineConsole";
@@ -204,7 +205,7 @@ export default function Home() {
                 {PLATFORM_LIST.map((p) => (
                   <div key={p.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
                     <div className="flex items-center gap-2">
-                      <span aria-hidden className="size-2 rounded-full" style={{ background: p.brand }} />
+                      <BrandIcon platform={p.id} className="size-4" style={{ color: p.brand }} />
                       <span className="text-xs font-medium">{p.label}</span>
                       <span
                         className={`ml-auto rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide ${

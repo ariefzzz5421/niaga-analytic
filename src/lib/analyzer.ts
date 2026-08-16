@@ -1,5 +1,6 @@
 import { analyse } from "./metrics";
-import { parseStoreUrl } from "./platform";
+import { isShortLink, parseStoreUrl } from "./platform";
+import { resolveShortLink } from "./scrape/shortlink";
 import { scrapeBlibli } from "./scrape/blibli";
 import { availableTransports, hasLiveTransport } from "./scrape/gateway";
 import { sampleScrape } from "./scrape/sample";
@@ -64,7 +65,17 @@ export async function analyzeStore(opts: AnalyzeOptions): Promise<StoreAnalysis>
   const emit = (event: ProgressEvent) => opts.onProgress?.(event);
 
   emit({ stage: "resolve", message: "Reading the store URL…", progress: 6 });
-  const ref = parseStoreUrl(opts.url);
+
+  // Share links (shp.ee, vt.tiktok.com, …) carry no seller id, so they have to
+  // be followed before anything can be parsed out of them.
+  let target = opts.url;
+  if (isShortLink(target)) {
+    emit({ stage: "resolve", message: "Following share link…", progress: 8 });
+    target = await resolveShortLink(target, opts.signal);
+    emit({ stage: "resolve", message: `Share link → ${target}`, progress: 10 });
+  }
+
+  const ref = parseStoreUrl(target);
 
   emit({
     stage: "resolve",

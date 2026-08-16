@@ -55,6 +55,13 @@ describe("parseStoreUrl", () => {
     assert.equal(ref.storeId, "ERI-60002");
   });
 
+  it("refuses a share link rather than guessing a seller from the short code", () => {
+    // This is the id.shp.ee case that used to report "not a supported
+    // marketplace" — it is Shopee, it just has to be opened first.
+    assert.throws(() => parseStoreUrl("id.shp.ee/DRrKeeuk"), /has to be opened/);
+    assert.throws(() => parseStoreUrl("https://vt.tiktok.com/ZS2abcdef/"), /has to be opened/);
+  });
+
   it("rejects unsupported marketplaces", () => {
     assert.throws(() => parseStoreUrl("https://www.lazada.co.id/shop/foo"), /not a supported marketplace/);
   });

@@ -17,28 +17,28 @@ export const PLATFORM_META: Record<Platform, PlatformMeta> = {
     id: "shopee",
     label: "Shopee",
     brand: "#ee4d2d",
-    domains: ["shopee.co.id", "shope.ee"],
+    domains: ["shopee.co.id", "shope.ee", "shp.ee", "id.shp.ee"],
     example: "https://shopee.co.id/erigo.official",
     flagship: true,
-    hint: "Paste the seller page: shopee.co.id/<username> or /shop/<id>",
+    hint: "Seller page, product link or a shp.ee share link",
   },
   tiktok: {
     id: "tiktok",
     label: "TikTok Shop",
     brand: "#fe2c55",
-    domains: ["tiktok.com", "shop.tiktok.com", "vt.tiktok.com", "shop-id.tokopedia.com"],
+    domains: ["tiktok.com", "shop.tiktok.com", "vt.tiktok.com", "vm.tiktok.com", "shop-id.tokopedia.com"],
     example: "https://www.tiktok.com/@erigo.official",
     flagship: true,
-    hint: "Paste the creator profile (@handle) or a shop.tiktok.com seller link",
+    hint: "Creator profile (@handle), a shop link, or a vt.tiktok.com share link",
   },
   tokopedia: {
     id: "tokopedia",
     label: "Tokopedia",
     brand: "#03ac0e",
-    domains: ["tokopedia.com"],
+    domains: ["tokopedia.com", "tokopedia.link"],
     example: "https://www.tokopedia.com/erigo",
     flagship: false,
-    hint: "Paste tokopedia.com/<shop-slug>",
+    hint: "tokopedia.com/<shop-slug> or a tokopedia.link share link",
   },
   blibli: {
     id: "blibli",
@@ -47,11 +47,26 @@ export const PLATFORM_META: Record<Platform, PlatformMeta> = {
     domains: ["blibli.com"],
     example: "https://www.blibli.com/merchant/erigo-official-store/ERI-60002",
     flagship: false,
-    hint: "Paste blibli.com/merchant/<slug>/<code>",
+    hint: "blibli.com/merchant/<slug>/<code>",
   },
 };
 
 export const PLATFORM_LIST = Object.values(PLATFORM_META);
+
+/**
+ * Hosts that serve nothing but a redirect to the real storefront. These are
+ * what the marketplace apps' share sheets produce, so users paste them
+ * constantly — but the short code carries no seller information, which means
+ * they can only be parsed after following the redirect.
+ */
+const SHORT_LINK_HOSTS = new Set([
+  "shp.ee",
+  "id.shp.ee",
+  "shope.ee",
+  "vt.tiktok.com",
+  "vm.tiktok.com",
+  "tokopedia.link",
+]);
 
 export class UnsupportedUrlError extends Error {
   constructor(message: string) {
@@ -237,11 +252,39 @@ function parseBlibli(url: URL): StoreRef {
 }
 
 /**
+ * True when the input is a marketplace share link whose target can only be
+ * known by following the redirect. Callers should resolve it server-side
+ * before parsing — see `resolveShortLink` in `scrape/shortlink.ts`.
+ */
+export function isShortLink(input: string): boolean {
+  try {
+    const url = normaliseInput(input);
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    if (!SHORT_LINK_HOSTS.has(host)) return false;
+    // vt./vm.tiktok.com paths are opaque codes, but a full tiktok.com/@handle
+    // on those hosts would already be parseable.
+    return !url.pathname.includes("@");
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Turn whatever the user pasted into a canonical `StoreRef`.
  * Accepts bare hosts, deep product links, tracking params and share links.
+ *
+ * Short links must be resolved to their destination first — this throws for
+ * them rather than guessing, because the short code contains no seller id.
  */
 export function parseStoreUrl(input: string): StoreRef {
   const url = normaliseInput(input);
+
+  if (isShortLink(input)) {
+    throw new UnsupportedUrlError(
+      `${url.hostname} is a share link that has to be opened before it can be read. Resolve it first, or paste the full store URL.`,
+    );
+  }
+
   const platform = detectPlatform(url);
 
   switch (platform) {

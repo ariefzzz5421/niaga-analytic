@@ -227,7 +227,10 @@ export async function gatewayFetch(req: GatewayRequest): Promise<GatewayResponse
       const body = await res.text();
 
       if (res.ok && !looksBlocked(res.status, body)) {
-        return { ok: true, status: res.status, body, transport: name, url: req.url };
+        // `res.url` is the post-redirect URL, which is what short-link
+        // resolution needs; it falls back to the request URL for transports
+        // that proxy the body without exposing the final hop.
+        return { ok: true, status: res.status, body, transport: name, url: res.url || req.url };
       }
       attempts.push(`${name}: HTTP ${res.status}${looksBlocked(res.status, body) ? " (blocked)" : ""}`);
     } catch (err) {
