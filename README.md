@@ -161,7 +161,7 @@ src/
     page.tsx         the whole product surface
   lib/
     platform.ts      URL → { platform, handle } for all four marketplaces
-    analyzer.ts      orchestration: cache → adapter → sample fallback
+    analyzer.ts      orchestration: cache → adapter → refuse (no silent samples)
     metrics.ts       revenue model, buckets, insights, confidence
     scrape/
       gateway.ts     transport chain + block detection
@@ -171,11 +171,15 @@ src/
       blibli.ts      REST search backend
       shortlink.ts   share-link (shp.ee, vt.tiktok.com) redirect following
       sample.ts      deterministic mock catalogue
+    brand-svg.ts     marketplace marks, shared by the app and the PNG script
   components/
-    brand-icons.tsx  vendored marketplace marks (inline SVG)
+    SetupPanel.tsx   what to configure when no data source is connected
+    brand-icons.tsx  React wrapper over brand-svg.ts
     …                dashboard, charts, compare board
-scripts/backtest.mjs end-to-end backtest CLI
-tests/               node:test suites — parser, share links, metrics, backtest
+scripts/
+  backtest.mjs       end-to-end backtest CLI
+  render-brand-pngs.mjs  writes public/brands/*.{svg,png}
+tests/               parser, share links, metrics, backtest, no-fabrication
 ```
 
 ## Development
