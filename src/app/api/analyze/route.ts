@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { analyzeStore } from "@/lib/analyzer";
+import { analyzeStore, NotConfiguredError } from "@/lib/analyzer";
 import { UnsupportedUrlError } from "@/lib/platform";
 import { GatewayError } from "@/lib/scrape/gateway";
 import type { ProgressEvent } from "@/lib/types";
@@ -22,10 +22,26 @@ function errorPayload(err: unknown): { status: number; body: Record<string, unkn
   if (err instanceof UnsupportedUrlError) {
     return { status: 400, body: { error: err.message, kind: "unsupported-url" } };
   }
+  if (err instanceof NotConfiguredError) {
+    return {
+      status: 503,
+      body: {
+        error: err.message,
+        kind: "not-configured",
+        platform: err.platform,
+        hint: err.hint,
+      },
+    };
+  }
   if (err instanceof GatewayError) {
     return {
       status: 502,
-      body: { error: err.message, kind: "upstream-blocked", attempts: err.attempts },
+      body: {
+        error: err.message,
+        kind: "upstream-blocked",
+        attempts: err.attempts,
+        hint: "Every transport was blocked or timed out. A residential provider key (SCRAPERAPI_KEY and friends) is usually what fixes this — see .env.example.",
+      },
     };
   }
   return {

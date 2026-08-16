@@ -4,11 +4,19 @@ import { useCallback, useRef, useState } from "react";
 
 import type { ProgressEvent, StoreAnalysis } from "./types";
 
+export interface AnalyzeFailure {
+  message: string;
+  /** `not-configured`, `upstream-blocked`, `unsupported-url`, … */
+  kind?: string;
+  /** Operator-facing recovery instructions, when the server has any. */
+  hint?: string;
+}
+
 interface AnalyzeState {
   loading: boolean;
   events: ProgressEvent[];
   analysis: StoreAnalysis | null;
-  error: string | null;
+  error: AnalyzeFailure | null;
 }
 
 const INITIAL: AnalyzeState = { loading: false, events: [], analysis: null, error: null };
@@ -47,7 +55,16 @@ export function useAnalyze() {
 
       if (!res.ok || !res.body) {
         const detail = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-        throw new Error(detail.error ?? `HTTP ${res.status}`);
+        setState((s) => ({
+          ...s,
+          loading: false,
+          error: {
+            message: detail.error ?? `HTTP ${res.status}`,
+            kind: detail.kind,
+            hint: detail.hint,
+          },
+        }));
+        return;
       }
 
       const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
@@ -74,19 +91,31 @@ export function useAnalyze() {
           } else if (name === "result") {
             setState((s) => ({ ...s, analysis: payload as StoreAnalysis, loading: false }));
           } else if (name === "failed") {
-            setState((s) => ({ ...s, error: payload.error ?? "Analysis failed.", loading: false }));
+            setState((s) => ({
+              ...s,
+              loading: false,
+              error: {
+                message: payload.error ?? "Analysis failed.",
+                kind: payload.kind,
+                hint: payload.hint,
+              },
+            }));
           }
         }
       }
 
       // The stream can close without a terminal frame if the connection drops.
-      setState((s) => (s.loading ? { ...s, loading: false, error: s.error ?? "Connection closed early." } : s));
+      setState((s) =>
+        s.loading
+          ? { ...s, loading: false, error: s.error ?? { message: "Connection closed early." } }
+          : s,
+      );
     } catch (err) {
       if (controller.signal.aborted) return;
       setState((s) => ({
         ...s,
         loading: false,
-        error: err instanceof Error ? err.message : "Analysis failed.",
+        error: { message: err instanceof Error ? err.message : "Analysis failed." },
       }));
     }
   }, []);

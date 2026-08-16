@@ -12,9 +12,9 @@
  */
 
 import type { RawProduct, RawStore, ScrapeContext, ScrapeResult, StoreRef } from "../types";
-import { ACTORS, hasApify, runActor } from "./apify";
-import { GatewayError, gatewayFetch } from "./gateway";
-import { buildSignedRequest, tiktokAuth } from "./tiktok-signature";
+import { ACTORS, hasApify, runActor } from "./apify.ts";
+import { GatewayError, gatewayFetch } from "./gateway.ts";
+import { buildSignedRequest, tiktokAuth } from "./tiktok-signature.ts";
 
 /* ------------------------------------------------------------------ */
 /* 1. Official Open API                                                */

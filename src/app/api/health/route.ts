@@ -14,6 +14,7 @@ export function GET() {
     ok: true,
     transports: availableTransports(),
     live: hasLiveTransport(),
+    demoMode: process.env.DEMO_MODE === "true",
     routes: {
       shopeeCookie: Boolean(process.env.SHOPEE_COOKIE?.trim()),
       tiktokOfficialApi: Boolean(tiktokAuth()),

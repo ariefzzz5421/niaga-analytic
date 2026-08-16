@@ -7,6 +7,7 @@ import { BrandIcon } from "@/components/brand-icons";
 import { CompareBoard } from "@/components/CompareBoard";
 import { Dashboard } from "@/components/Dashboard";
 import { PipelineConsole } from "@/components/PipelineConsole";
+import { SetupPanel } from "@/components/SetupPanel";
 import { StoreInput } from "@/components/StoreInput";
 import { PLATFORM_LIST } from "@/lib/platform";
 import { useAnalyze } from "@/lib/useAnalyze";
@@ -15,8 +16,18 @@ type Tab = "single" | "compare";
 
 interface Health {
   live: boolean;
+  demoMode: boolean;
   transports: string[];
   routes: { shopeeCookie: boolean; tiktokOfficialApi: boolean; apify: boolean };
+}
+
+/** Header status: live sources, demo figures, or nothing connected. */
+function healthStatus(h: Health): { label: string; color: string } {
+  if (h.demoMode) return { label: "Demo mode — sample figures", color: "var(--warning)" };
+  if (h.live || h.routes.tiktokOfficialApi || h.routes.apify) {
+    return { label: "Live data connected", color: "var(--good)" };
+  }
+  return { label: "No data source connected", color: "var(--critical)" };
 }
 
 function Header({ health }: { health: Health | null }) {
@@ -41,9 +52,9 @@ function Header({ health }: { health: Health | null }) {
               <span
                 aria-hidden
                 className="size-1.5 rounded-full"
-                style={{ background: health.live ? "var(--good)" : "var(--warning)" }}
+                style={{ background: healthStatus(health).color }}
               />
-              {health.live ? "Live scraping enabled" : "Sample mode"}
+              {healthStatus(health).label}
             </span>
           ) : null}
           <a
@@ -180,6 +191,9 @@ export default function Home() {
           ) : (
             <>
               {started ? <PipelineConsole events={events} error={error} /> : null}
+              {error && (error.kind === "not-configured" || error.kind === "upstream-blocked") ? (
+                <SetupPanel hint={error.hint} />
+              ) : null}
               {analysis ? (
                 <Dashboard analysis={analysis} onRefresh={() => run(lastUrl, { refresh: true })} />
               ) : null}

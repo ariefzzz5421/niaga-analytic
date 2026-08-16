@@ -61,7 +61,7 @@ export function PlatformBadge({ platform, size = "md" }: { platform: Platform; s
     >
       <BrandIcon
         platform={platform}
-        className={size === "sm" ? "size-3" : "size-3.5"}
+        className={size === "sm" ? "size-3.5" : "size-4"}
         style={{ color: meta.brand }}
       />
       {meta.label}

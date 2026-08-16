@@ -7,7 +7,7 @@
  */
 
 import type { RawProduct, RawStore, ScrapeContext, ScrapeResult, StoreRef } from "../types";
-import { GatewayError, gatewayJson } from "./gateway";
+import { GatewayError, gatewayJson } from "./gateway.ts";
 
 const SEARCH = "https://www.blibli.com/backend/search/products";
 const PAGE_SIZE = 100;

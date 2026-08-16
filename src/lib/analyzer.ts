@@ -1,12 +1,14 @@
-import { analyse } from "./metrics";
-import { isShortLink, parseStoreUrl } from "./platform";
-import { resolveShortLink } from "./scrape/shortlink";
-import { scrapeBlibli } from "./scrape/blibli";
-import { availableTransports, hasLiveTransport } from "./scrape/gateway";
-import { sampleScrape } from "./scrape/sample";
-import { scrapeShopee } from "./scrape/shopee";
-import { scrapeTiktok } from "./scrape/tiktok";
-import { scrapeTokopedia } from "./scrape/tokopedia";
+import { analyse } from "./metrics.ts";
+import { isShortLink, parseStoreUrl } from "./platform.ts";
+import { hasApify } from "./scrape/apify.ts";
+import { resolveShortLink } from "./scrape/shortlink.ts";
+import { tiktokAuth } from "./scrape/tiktok-signature.ts";
+import { scrapeBlibli } from "./scrape/blibli.ts";
+import { availableTransports, hasLiveTransport } from "./scrape/gateway.ts";
+import { sampleScrape } from "./scrape/sample.ts";
+import { scrapeShopee } from "./scrape/shopee.ts";
+import { scrapeTiktok } from "./scrape/tiktok.ts";
+import { scrapeTokopedia } from "./scrape/tokopedia.ts";
 import type { Platform, ProgressEvent, ScrapeContext, ScrapeResult, StoreAnalysis, StoreRef } from "./types";
 
 const ADAPTERS: Record<Platform, (ref: StoreRef, ctx: ScrapeContext) => Promise<ScrapeResult>> = {
@@ -47,6 +49,49 @@ function writeCache(ref: StoreRef, analysis: StoreAnalysis): void {
   if (cache.size > 200) {
     const oldest = [...cache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
     if (oldest) cache.delete(oldest[0]);
+  }
+}
+
+/**
+ * Whether a platform has any route that can return live data right now.
+ * Shopee/Tokopedia/Blibli need a proxy transport; TikTok can also go through
+ * its own Open API or an Apify actor.
+ */
+export function isPlatformConfigured(platform: Platform): boolean {
+  if (platform === "tiktok") {
+    return Boolean(tiktokAuth()) || hasApify() || hasLiveTransport();
+  }
+  return hasLiveTransport();
+}
+
+/** What the operator has to set up for this platform, in plain language. */
+export function setupHint(platform: Platform): string {
+  if (platform === "tiktok") {
+    return (
+      "TikTok Shop needs one of: TIKTOK_APP_KEY + TIKTOK_APP_SECRET + TIKTOK_ACCESS_TOKEN " +
+      "(your own shop, exact numbers), APIFY_TOKEN (any public seller), or a scraping " +
+      "provider key such as SCRAPERAPI_KEY."
+    );
+  }
+  const label = platform.charAt(0).toUpperCase() + platform.slice(1);
+  return (
+    `${label} blocks datacentre IPs, so it needs a residential scraping provider. ` +
+    "Set one of SCRAPERAPI_KEY, SCRAPINGBEE_KEY, ZENROWS_KEY or BRIGHTDATA_PROXY_URL " +
+    "and redeploy. See .env.example."
+  );
+}
+
+export class NotConfiguredError extends Error {
+  readonly platform: Platform;
+  readonly hint: string;
+
+  constructor(platform: Platform) {
+    super(
+      `No live data source is configured for ${platform}, so there is nothing real to report.`,
+    );
+    this.name = "NotConfiguredError";
+    this.platform = platform;
+    this.hint = setupHint(platform);
   }
 }
 
@@ -98,6 +143,12 @@ export async function analyzeStore(opts: AnalyzeOptions): Promise<StoreAnalysis>
     emit({ stage: "connect", message: "Sample mode — skipping live fetch", progress: 30 });
     result = sampleScrape(ref);
   } else {
+    // Fail before spending 20s on transports that cannot possibly work, and
+    // say exactly what is missing instead of reporting a generic timeout.
+    if (!isPlatformConfigured(ref.platform) && process.env.DEMO_MODE !== "true") {
+      throw new NotConfiguredError(ref.platform);
+    }
+
     emit({
       stage: "connect",
       message: `Opening ${ref.platform} via ${availableTransports().join(" → ")}…`,
@@ -108,12 +159,15 @@ export async function analyzeStore(opts: AnalyzeOptions): Promise<StoreAnalysis>
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
 
-      // A hard failure with no live transport configured is the expected
-      // first-run path, so fall back to samples instead of erroring out.
-      if (!hasLiveTransport() || process.env.ALLOW_SAMPLE_FALLBACK !== "false") {
+      // Substituting invented numbers for a failed scrape is worse than
+      // failing: the dashboard looks identical either way, so a silent
+      // fallback quietly turns fiction into a business decision. Samples are
+      // opt-in only — DEMO_MODE for a public demo deploy, or `sample: true`
+      // on the request.
+      if (process.env.DEMO_MODE === "true") {
         emit({
           stage: "connect",
-          message: "Live fetch unavailable — falling back to sample data",
+          message: "DEMO_MODE — live fetch failed, serving sample data",
           progress: 45,
         });
         result = sampleScrape(ref);

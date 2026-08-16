@@ -128,19 +128,23 @@ export function Dashboard({
 
       <RevenueTrend data={analysis.timeline} />
 
-      {/* items-start keeps each card at its natural height — without it the
-          grid stretches the shorter column and leaves dead space under it. */}
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <TopProducts products={analysis.products} />
-        <div className="space-y-4">
+      {/*
+        Two stacked columns rather than a grid of single cards. Card heights
+        vary a lot (a 12-bar chart against a 4-bar one), so a plain two-column
+        grid leaves a hole under whichever card is shorter. Stacking several
+        cards per column lets the two sides even out instead.
+      */}
+      <div className="grid items-start gap-4 lg:grid-cols-12">
+        <div className="space-y-4 lg:col-span-7">
+          <TopProducts products={analysis.products} limit={12} />
+          <InsightList insights={analysis.insights} />
+        </div>
+
+        <div className="space-y-4 lg:col-span-5">
           <PriceBandChart buckets={analysis.priceBands} />
           {analysis.categories.length > 1 ? <CategoryChart buckets={analysis.categories} /> : null}
+          <ConfidencePanel confidence={analysis.confidence} log={analysis.log} />
         </div>
-      </div>
-
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <InsightList insights={analysis.insights} />
-        <ConfidencePanel confidence={analysis.confidence} log={analysis.log} />
       </div>
 
       <ProductTable products={analysis.products} storeName={store.name} />

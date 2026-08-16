@@ -2,6 +2,7 @@
 
 import { Check, Loader2, X } from "lucide-react";
 
+import type { AnalyzeFailure } from "@/lib/useAnalyze";
 import type { ProgressEvent, ProgressStage } from "@/lib/types";
 
 const STAGES: { id: ProgressStage; label: string }[] = [
@@ -24,7 +25,7 @@ export function PipelineConsole({
   error,
 }: {
   events: ProgressEvent[];
-  error?: string | null;
+  error?: AnalyzeFailure | null;
 }) {
   const latest = events.at(-1);
   const currentIndex = latest ? ORDER.indexOf(latest.stage) : -1;
@@ -99,7 +100,7 @@ export function PipelineConsole({
               {e.message}
             </p>
           ))}
-          {error ? <p className="mt-1 text-[var(--critical)]">✕ {error}</p> : null}
+          {error ? <p className="mt-1 text-[var(--critical)]">✕ {error.message}</p> : null}
         </div>
       </div>
     </div>

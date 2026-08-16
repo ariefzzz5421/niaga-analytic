@@ -22,9 +22,17 @@ cp .env.example .env.local   # optional — see "Going live" below
 npm run dev                  # http://localhost:3000
 ```
 
-It runs with **zero configuration**. Without credentials every store resolves to
-a deterministic sample catalogue, labelled as such throughout the UI. Add keys
-to switch individual routes over to live marketplace data.
+### It will not run without a data source — on purpose
+
+With no credentials configured, an analysis **fails with a setup panel** instead
+of returning numbers. That is deliberate: a fabricated revenue figure looks
+exactly like a real one on screen, and people price products and buy inventory
+off these dashboards. The app refuses rather than guess.
+
+Set one provider key (below) and real data starts flowing. To click around the
+interface first, set `DEMO_MODE=true` — every figure it produces is labelled
+sample and scored zero confidence. Never set it on an instance anyone makes
+decisions from.
 
 ## What it computes
 
@@ -104,8 +112,15 @@ curl -X POST localhost:3000/api/compare \
 ```
 
 `POST /api/analyze` accepts `{ url, stream?, sample?, refresh? }`. Errors carry
-a `kind` (`unsupported-url`, `upstream-blocked`, `bad-request`) plus the list of
-transports that were attempted.
+a `kind` plus, where useful, a `hint` naming the environment variable that
+fixes it:
+
+| `kind` | HTTP | Meaning |
+|---|---|---|
+| `not-configured` | 503 | No live route exists for this platform yet |
+| `upstream-blocked` | 502 | Every transport was blocked or timed out |
+| `unsupported-url` | 400 | Not a marketplace link this app reads |
+| `bad-request` | 400 | Malformed body |
 
 ## Accepted URL formats
 
@@ -230,7 +245,13 @@ so nothing is hotlinked from a third-party CDN:
 | Shopee | Simple Icons (CC0-1.0) |
 | TikTok | Simple Icons (CC0-1.0) |
 | Blibli | Simple Icons (CC0-1.0) |
-| Tokopedia | generic shopping-bag glyph — Simple Icons does not carry Tokopedia, and an approximated logo would be worse than an honestly generic one |
+| TikTok Shop | Simple Icons note set inside a shop bag, with the brand's chromatic offset |
+| Tokopedia | hand-drawn owl — Simple Icons does not carry Tokopedia and the official asset was not reachable, so this is a recognisable approximation rather than the exact mark |
+
+`src/lib/brand-svg.ts` is the single source for both the React components and
+`node scripts/render-brand-pngs.mjs`, which writes `public/brands/*.{svg,png}`
+at 256×256 @2x for favicons, OG images and decks. The site itself renders the
+SVG inline so the marks stay sharp at every size.
 
 ## Notes on responsible use
 

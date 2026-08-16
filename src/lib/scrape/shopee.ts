@@ -8,7 +8,7 @@
  */
 
 import type { RawProduct, RawStore, ScrapeContext, ScrapeResult, StoreRef } from "../types";
-import { GatewayError, gatewayJson } from "./gateway";
+import { GatewayError, gatewayJson } from "./gateway.ts";
 
 const ORIGIN = "https://shopee.co.id";
 const MICRO = 100_000;
