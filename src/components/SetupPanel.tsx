@@ -24,14 +24,14 @@ const PROVIDERS: Provider[] = [
     env: "SCRAPERAPI_KEY",
     free: "5,000 requests free",
     url: "https://www.scraperapi.com",
-    covers: "Shopee, Tokopedia, Blibli, TikTok",
+    covers: "All six marketplaces",
   },
   {
     name: "ScrapingBee",
     env: "SCRAPINGBEE_KEY",
     free: "1,000 requests free",
     url: "https://www.scrapingbee.com",
-    covers: "Shopee, Tokopedia, Blibli, TikTok",
+    covers: "All six marketplaces",
   },
   {
     name: "Apify",

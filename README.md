@@ -1,11 +1,12 @@
 # Niaga Analytics
 
 Sales and revenue intelligence for Indonesian marketplaces. Paste an official
-store link from **Shopee**, **TikTok Shop**, **Tokopedia** or **Blibli** and get
-an estimated revenue model, per-SKU breakdown and catalogue health report.
+store link from **Shopee**, **TikTok Shop**, **Tokopedia**, **Blibli**,
+**Lazada** or **Bukalapak** and get an estimated revenue model, per-SKU
+breakdown and catalogue health report.
 
-Shopee and TikTok Shop are the flagship integrations; Tokopedia and Blibli ship
-as best-effort adapters.
+Shopee and TikTok Shop are the flagship integrations; the other four ship as
+best-effort adapters.
 
 ```
 ┌── paste URL ──┐   ┌── platform adapter ──┐   ┌── metrics ──┐   ┌── dashboard ──┐
@@ -56,7 +57,7 @@ pipeline log records exactly which route produced the numbers.
 Everything is configured through environment variables. `.env.example`
 documents each one; the short version:
 
-### 1. A scraping transport (needed for Shopee, Tokopedia, Blibli)
+### 1. A scraping transport (needed for every platform except TikTok)
 
 Marketplaces block datacentre IPs, so requests go through a transport chain.
 Set `SCRAPE_PROVIDER` to the order you want and supply at least one key:
@@ -135,6 +136,9 @@ tiktok.com/@erigo.official/video/7300000000     → tiktok/erigo.official
 shop-id.tokopedia.com/view/shop?seller_id=7788  → tiktok/7788    (TikTok Shop ID)
 tokopedia.com/erigo/kaos-polos-hitam            → tokopedia/erigo
 blibli.com/merchant/erigo-official/ERI-60002    → blibli/erigo-official
+lazada.co.id/shop/erigo-official                → lazada/erigo-official
+lazada.co.id/products/kaos-i1?sellerId=99887    → lazada/99887
+bukalapak.com/u/erigo-official                  → bukalapak/erigo-official
 ```
 
 **Share links** are what the marketplace apps' share sheets actually produce,
@@ -169,6 +173,8 @@ src/
       tiktok.ts      Open API → Apify → profile JSON
       tokopedia.ts   gql.tokopedia.com
       blibli.ts      REST search backend
+      lazada.ts      storefront ?ajax=true JSON
+      bukalapak.ts   api.bukalapak.com store + products
       shortlink.ts   share-link (shp.ee, vt.tiktok.com) redirect following
       sample.ts      deterministic mock catalogue
     brand-svg.ts     marketplace marks, shared by the app and the PNG script
@@ -249,8 +255,13 @@ so nothing is hotlinked from a third-party CDN:
 | Shopee | Simple Icons (CC0-1.0) |
 | TikTok | Simple Icons (CC0-1.0) |
 | Blibli | Simple Icons (CC0-1.0) |
-| TikTok Shop | Simple Icons note set inside a shop bag, with the brand's chromatic offset |
-| Tokopedia | hand-drawn owl — Simple Icons does not carry Tokopedia and the official asset was not reachable, so this is a recognisable approximation rather than the exact mark |
+| Bukalapak | Simple Icons (CC0-1.0) |
+| TikTok | Simple Icons note with the brand's cyan/magenta chromatic offset |
+| Tokopedia | hand-drawn owl — Simple Icons carries no Tokopedia mark |
+| Lazada | hand-drawn folded bag — Simple Icons carries no Lazada mark |
+
+The two hand-drawn marks are recognisable approximations, not the exact
+trademarks; swap in an official SVG and it drops straight in.
 
 `src/lib/brand-svg.ts` is the single source for both the React components and
 `node scripts/render-brand-pngs.mjs`, which writes `public/brands/*.{svg,png}`

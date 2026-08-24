@@ -12,6 +12,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 
 import { analyzeStore, isPlatformConfigured, NotConfiguredError, setupHint } from "../src/lib/analyzer.ts";
+import { PLATFORM_META, parseStoreUrl } from "../src/lib/platform.ts";
 import { PLATFORMS } from "../src/lib/types.ts";
 
 const SCRAPE_ENV = [
@@ -54,18 +55,22 @@ describe("no-fabrication guarantee", () => {
   });
 
   it("refuses for every platform, not just Shopee", async () => {
-    const urls = {
-      shopee: "https://shopee.co.id/a",
-      tiktok: "https://www.tiktok.com/@a",
-      tokopedia: "https://www.tokopedia.com/a",
-      blibli: "https://www.blibli.com/merchant/a/A-1",
-    };
+    // Driven off PLATFORM_META so adding a marketplace cannot skip this check.
     for (const platform of PLATFORMS) {
       await assert.rejects(
-        () => analyzeStore({ url: urls[platform] }),
+        () => analyzeStore({ url: PLATFORM_META[platform].example }),
         NotConfiguredError,
         `${platform} did not refuse`,
       );
+    }
+  });
+
+  it("has a working example URL for every platform it advertises", () => {
+    for (const platform of PLATFORMS) {
+      const meta = PLATFORM_META[platform];
+      const ref = parseStoreUrl(meta.example);
+      assert.equal(ref.platform, platform, `${meta.example} parsed as ${ref.platform}`);
+      assert.ok(ref.handle.length > 0, `${platform} example yields no handle`);
     }
   });
 

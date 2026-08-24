@@ -68,6 +68,8 @@ const PLATFORM_PROFILE: Record<Platform, { products: [number, number]; velocity:
   tiktok: { products: [25, 90], velocity: 1.9, followers: 420_000 },
   tokopedia: { products: [50, 190], velocity: 0.75, followers: 90_000 },
   blibli: { products: [30, 120], velocity: 0.45, followers: 24_000 },
+  lazada: { products: [40, 160], velocity: 0.6, followers: 60_000 },
+  bukalapak: { products: [35, 140], velocity: 0.4, followers: 18_000 },
 };
 
 function pick<T>(rng: () => number, arr: T[]): T {

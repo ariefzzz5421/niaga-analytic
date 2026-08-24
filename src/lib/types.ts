@@ -6,7 +6,7 @@
  * `StoreAnalysis`, which is the only shape the UI ever sees.
  */
 
-export const PLATFORMS = ["shopee", "tiktok", "tokopedia", "blibli"] as const;
+export const PLATFORMS = ["shopee", "tiktok", "tokopedia", "blibli", "lazada", "bukalapak"] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
 export type DataSource =

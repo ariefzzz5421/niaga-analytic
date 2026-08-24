@@ -4,6 +4,8 @@ import { hasApify } from "./scrape/apify.ts";
 import { resolveShortLink } from "./scrape/shortlink.ts";
 import { tiktokAuth } from "./scrape/tiktok-signature.ts";
 import { scrapeBlibli } from "./scrape/blibli.ts";
+import { scrapeBukalapak } from "./scrape/bukalapak.ts";
+import { scrapeLazada } from "./scrape/lazada.ts";
 import { availableTransports, hasLiveTransport } from "./scrape/gateway.ts";
 import { sampleScrape } from "./scrape/sample.ts";
 import { scrapeShopee } from "./scrape/shopee.ts";
@@ -16,6 +18,8 @@ const ADAPTERS: Record<Platform, (ref: StoreRef, ctx: ScrapeContext) => Promise<
   tiktok: scrapeTiktok,
   tokopedia: scrapeTokopedia,
   blibli: scrapeBlibli,
+  lazada: scrapeLazada,
+  bukalapak: scrapeBukalapak,
 };
 
 const MAX_PRODUCTS = Number(process.env.MAX_PRODUCTS ?? 240);

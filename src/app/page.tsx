@@ -88,7 +88,8 @@ function Hero() {
 
       <p className="mx-auto mt-4 max-w-xl text-pretty text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base">
         Revenue models, unit velocity and catalogue health for any official store on Shopee,
-        TikTok Shop, Tokopedia or Blibli — built from the marketplace&apos;s own public listing data.
+        TikTok Shop, Tokopedia, Blibli, Lazada or Bukalapak — built from the marketplace&apos;s own
+        public listing data.
       </p>
     </div>
   );

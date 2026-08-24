@@ -49,9 +49,78 @@ export const PLATFORM_META: Record<Platform, PlatformMeta> = {
     flagship: false,
     hint: "blibli.com/merchant/<slug>/<code>",
   },
+  lazada: {
+    id: "lazada",
+    label: "Lazada",
+    brand: "#f57224",
+    domains: ["lazada.co.id", "lazada.com"],
+    example: "https://www.lazada.co.id/shop/erigo-official",
+    flagship: false,
+    hint: "lazada.co.id/shop/<slug>",
+  },
+  bukalapak: {
+    id: "bukalapak",
+    label: "Bukalapak",
+    brand: "#e31e52",
+    domains: ["bukalapak.com"],
+    example: "https://www.bukalapak.com/u/erigo-official",
+    flagship: false,
+    hint: "bukalapak.com/u/<username>",
+  },
 };
 
 export const PLATFORM_LIST = Object.values(PLATFORM_META);
+
+function parseLazada(url: URL): StoreRef {
+  const seg = segments(url);
+
+  // /shop/<slug> and /shop/<slug>/<anything>
+  const shopIdx = seg.indexOf("shop");
+  if (shopIdx !== -1 && seg[shopIdx + 1]) {
+    const slug = seg[shopIdx + 1];
+    return {
+      platform: "lazada",
+      handle: slug,
+      url: `https://www.lazada.co.id/shop/${slug}`,
+    };
+  }
+
+  // Product pages carry the seller behind ?sellerId=
+  const sellerId = url.searchParams.get("sellerId") ?? url.searchParams.get("seller_id");
+  if (sellerId) {
+    return {
+      platform: "lazada",
+      handle: sellerId,
+      storeId: sellerId,
+      url: `https://www.lazada.co.id/shop/?sellerId=${sellerId}`,
+    };
+  }
+
+  throw new UnsupportedUrlError(
+    "That Lazada link has no seller in it. Use lazada.co.id/shop/<slug> or a link with sellerId.",
+  );
+}
+
+function parseBukalapak(url: URL): StoreRef {
+  const seg = segments(url);
+
+  // /u/<username> is the store page; /<username> also resolves for legacy links.
+  const uIdx = seg.indexOf("u");
+  const handle = uIdx !== -1 ? seg[uIdx + 1] : seg[0];
+  const reserved = new Set(["p", "products", "c", "search", "promo", "bantuan", "login"]);
+
+  if (!handle || reserved.has(handle.toLowerCase())) {
+    throw new UnsupportedUrlError(
+      "That Bukalapak link has no seller in it. Use bukalapak.com/u/<username>.",
+    );
+  }
+
+  return {
+    platform: "bukalapak",
+    handle,
+    url: `https://www.bukalapak.com/u/${handle}`,
+  };
+}
 
 /**
  * Hosts that serve nothing but a redirect to the real storefront. These are
@@ -296,6 +365,10 @@ export function parseStoreUrl(input: string): StoreRef {
       return parseTokopedia(url);
     case "blibli":
       return parseBlibli(url);
+    case "lazada":
+      return parseLazada(url);
+    case "bukalapak":
+      return parseBukalapak(url);
   }
 }
 

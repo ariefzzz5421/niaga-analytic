@@ -55,6 +55,23 @@ describe("parseStoreUrl", () => {
     assert.equal(ref.storeId, "ERI-60002");
   });
 
+  it("reads a Lazada shop slug and a product link's sellerId", () => {
+    assert.equal(parseStoreUrl("https://www.lazada.co.id/shop/erigo-official").handle, "erigo-official");
+    const fromProduct = parseStoreUrl("https://www.lazada.co.id/products/kaos-i123.html?sellerId=99887");
+    assert.equal(fromProduct.platform, "lazada");
+    assert.equal(fromProduct.storeId, "99887");
+  });
+
+  it("reads a Bukalapak username from the /u/ path", () => {
+    const ref = parseStoreUrl("https://www.bukalapak.com/u/erigo-official");
+    assert.equal(ref.platform, "bukalapak");
+    assert.equal(ref.handle, "erigo-official");
+  });
+
+  it("rejects a Bukalapak product link that names no seller", () => {
+    assert.throws(() => parseStoreUrl("https://www.bukalapak.com/p/fashion/kaos"), /no seller/);
+  });
+
   it("refuses a share link rather than guessing a seller from the short code", () => {
     // This is the id.shp.ee case that used to report "not a supported
     // marketplace" — it is Shopee, it just has to be opened first.
@@ -63,7 +80,10 @@ describe("parseStoreUrl", () => {
   });
 
   it("rejects unsupported marketplaces", () => {
-    assert.throws(() => parseStoreUrl("https://www.lazada.co.id/shop/foo"), /not a supported marketplace/);
+    // Lazada used to sit here; it is supported now, so this needs a marketplace
+    // the app genuinely does not read.
+    assert.throws(() => parseStoreUrl("https://www.amazon.com/shops/foo"), /not a supported marketplace/);
+    assert.throws(() => parseStoreUrl("https://www.zalora.co.id/shop/foo"), /not a supported marketplace/);
   });
 
   it("rejects a Tokopedia search page that carries no shop", () => {

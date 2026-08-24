@@ -5,12 +5,14 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Niaga Analytics — Sales & revenue intelligence for Indonesian marketplaces",
   description:
-    "Paste any Shopee, TikTok Shop, Tokopedia or Blibli store link and get an estimated revenue model, top-SKU breakdown and catalogue health report in seconds.",
+    "Paste any Shopee, TikTok Shop, Tokopedia, Blibli, Lazada or Bukalapak store link and get an estimated revenue model, top-SKU breakdown and catalogue health report in seconds.",
   keywords: [
     "shopee analytics",
     "tiktok shop analytics",
     "tokopedia",
     "blibli",
+    "lazada",
+    "bukalapak",
     "riset produk",
     "estimasi omzet",
     "indonesia ecommerce",
