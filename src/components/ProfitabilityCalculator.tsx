@@ -1,14 +1,55 @@
 "use client";
+
+import { ChevronDown, ExternalLink, Info } from "lucide-react";
 import { useMemo, useState } from "react";
-import { MARKETPLACE_FEES, MARKETPLACE_ORDER } from "@/data/marketplaceFees";
-import { calculateProfit, findTargetPrice, type MarketplaceId } from "@/lib/profitability";
-const rupiah=(v:number)=>new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(v);
-export function ProfitabilityCalculator(){
- const [cost,setCost]=useState(100000),[price,setPrice]=useState(150000),[quantity,setQuantity]=useState(1),[packaging,setPackaging]=useState(3000),[ads,setAds]=useState(0),[target,setTarget]=useState(20);
- const [rates,setRates]=useState<Record<MarketplaceId,number>>({shopee:0,tiktok:0,tokopedia:0,lazada:0,blibli:0,website:0});
- const rows=useMemo(()=>MARKETPLACE_ORDER.map(id=>{const platform=MARKETPLACE_FEES[id];const fees=rates[id]>0?[{label:"Effective seller fee",rate:rates[id]/100}]:platform.fees;const input={hpp:cost,sellingPrice:price,quantity,packaging,advertising:ads};const result=calculateProfit(input,fees);const targetPrice=findTargetPrice({hpp:cost,quantity,packaging,advertising:ads},fees,target/100);return{platform,result,targetPrice}}).sort((a,b)=>b.result.netProfit-a.result.netProfit),[cost,price,quantity,packaging,ads,target,rates]);
- return <section className="mt-10" id="profit-calculator"><div className="mb-5"><p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--text-muted)]">Marketplace Profit Calculator</p><h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Hitung profit sebelum listing.</h2><p className="mt-2 max-w-2xl text-sm text-[var(--text-secondary)]">Masukkan economics produk sekali. Isi effective seller fee dari Seller Center kategori tokomu untuk hasil yang akurat.</p></div><div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]"><div className="card h-fit p-4 sm:p-5"><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1"><Money label="HPP / Cost of Goods" value={cost} set={setCost}/><Money label="Harga jual" value={price} set={setPrice}/><Num label="Quantity" value={quantity} set={v=>setQuantity(Math.max(1,v))}/><Money label="Packaging / order" value={packaging} set={setPackaging}/><Money label="Ads / CAC per order" value={ads} set={setAds}/><Num label="Target net margin (%)" value={target} set={setTarget}/></div><div className="mt-5 border-t border-[var(--border)] pt-4"><p className="mb-3 text-xs font-medium">Effective seller fee (%)</p><div className="grid grid-cols-2 gap-2">{MARKETPLACE_ORDER.map(id=><Num key={id} label={MARKETPLACE_FEES[id].label} value={rates[id]} set={v=>setRates(c=>({...c,[id]:Math.max(0,v)}))}/>)}</div></div></div><div className="min-w-0 space-y-3">{rows.map(({platform,result,targetPrice},i)=><article key={platform.id} className="card overflow-hidden p-4 sm:p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[var(--surface-3)] text-xs font-bold">{platform.label[0]}</span><h3 className="text-sm font-semibold">{platform.label}</h3>{i===0?<span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px]">Best profit</span>:null}</div><p className="mt-2 text-[11px] text-[var(--text-muted)]">{platform.note}</p></div><div className="shrink-0 text-right"><p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Net profit</p><p className={`mt-1 text-base font-semibold sm:text-lg ${result.netProfit>=0?"text-[var(--good)]":"text-red-400"}`}>{rupiah(result.netProfit)}</p></div></div><div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4"><Metric label="Platform fee" value={rupiah(result.marketplaceFees)}/><Metric label="Settlement" value={rupiah(result.netSettlement)}/><Metric label="Net margin" value={`${result.netMargin.toFixed(1)}%`}/><Metric label={`Target ${target}%`} value={rupiah(targetPrice)}/></div></article>)}</div></div><p className="mt-4 text-[11px] leading-relaxed text-[var(--text-muted)]">Fee berbeda menurut kategori, seller tier dan program. Nilai yang belum diverifikasi tidak di-hard-code; gunakan effective fee aktual dari Seller Center.</p></section>;
+import { CATEGORY_OPTIONS, MARKETPLACE_FEES, MARKETPLACE_ORDER, type ProductCategory } from "@/data/marketplaceFees";
+import { calculateProfit, findTargetPrice } from "@/lib/profitability";
+
+const rupiah = (v: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(v);
+const TARGET_MARGIN = 0.2;
+
+export function ProfitabilityCalculator() {
+  const [cost, setCost] = useState(100000);
+  const [category, setCategory] = useState<ProductCategory>("general");
+
+  const rows = useMemo(() => MARKETPLACE_ORDER.map((id) => {
+    const platform = MARKETPLACE_FEES[id];
+    const rate = platform.rates[category] / 100;
+    const fees = [{ label: "Marketplace fee", rate, fixed: platform.fixedFee ?? 0 }];
+    const recommendedPrice = findTargetPrice({ hpp: cost, quantity: 1 }, fees, TARGET_MARGIN);
+    const result = calculateProfit({ hpp: cost, sellingPrice: recommendedPrice, quantity: 1 }, fees);
+    return { platform, rate, recommendedPrice, result };
+  }).sort((a, b) => b.result.netProfit - a.result.netProfit), [cost, category]);
+
+  return (
+    <section className="mx-auto max-w-5xl">
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-1"><p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--text-muted)]">Simple mode</p><h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Berapa harga jual yang aman?</h1><p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">Cukup masukkan HPP. NIAGA menghitung harga jual rekomendasi dengan target margin bersih 20% dan fee marketplace default berdasarkan kategori.</p></div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <label className="text-xs font-medium text-[var(--text-secondary)]">HPP / Cost of Goods<div className="relative mt-2"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[var(--text-muted)]">Rp</span><input value={cost} onChange={(e) => setCost(Math.max(0, Number(e.target.value)))} inputMode="numeric" type="number" min={0} className="h-14 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] pl-11 pr-4 text-lg font-semibold tabular-nums outline-none focus:border-[var(--accent)]" /></div></label>
+          <label className="text-xs font-medium text-[var(--text-secondary)]">Kategori produk<div className="relative mt-2"><select value={category} onChange={(e) => setCategory(e.target.value as ProductCategory)} className="h-14 w-full appearance-none rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-4 pr-11 text-base font-medium outline-none focus:border-[var(--accent)]">{CATEGORY_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}</select><ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-[var(--text-muted)]" /></div></label>
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between"><div><h2 className="text-base font-semibold">Rekomendasi harga jual</h2><p className="mt-1 text-xs text-[var(--text-muted)]">Target margin bersih 20% · qty 1</p></div><span className="rounded-full border border-[var(--border)] bg-[var(--surface-1)] px-3 py-1 text-[10px] text-[var(--text-muted)]">Updated 14 Sep 2026</span></div>
+
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {rows.map(({ platform, rate, recommendedPrice, result }, index) => (
+          <article key={platform.id} className="rounded-2xl border border-[var(--border)] bg-[var(--surface-1)] p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3"><span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/95 p-2"><img src={platform.logo} alt={`${platform.label} logo`} className="max-h-full max-w-full object-contain" /></span><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{platform.label}</h3>{index === 0 ? <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">Lowest price</span> : null}</div><p className="mt-0.5 text-[11px] text-[var(--text-muted)]">Default fee {rate * 100}%{platform.fixedFee ? ` + ${rupiah(platform.fixedFee)}` : ""}</p></div></div>
+              <div className="shrink-0 text-right"><p className="text-[9px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Jual mulai</p><p className="mt-1 text-lg font-semibold tabular-nums text-[var(--good)]">{rupiah(recommendedPrice)}</p></div>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2"><Metric label="HPP" value={rupiah(cost)} /><Metric label="Fee" value={rupiah(result.marketplaceFees)} /><Metric label="Profit" value={rupiah(result.netProfit)} /></div>
+            <div className="mt-3 flex items-start gap-2 rounded-xl bg-[var(--surface-2)] px-3 py-2.5"><Info className="mt-0.5 size-3.5 shrink-0 text-[var(--text-muted)]" /><p className="text-[10px] leading-relaxed text-[var(--text-muted)]">{platform.note}</p></div>
+            {platform.sourceUrl ? <a href={platform.sourceUrl} target="_blank" rel="noreferrer noopener" className="mt-3 inline-flex min-h-10 items-center gap-1.5 text-[11px] font-medium text-[var(--text-secondary)] hover:text-white">{platform.sourceLabel}<ExternalLink className="size-3" /></a> : null}
+          </article>
+        ))}
+      </div>
+
+      <p className="mt-5 rounded-xl border border-[var(--border)] bg-[var(--surface-1)] p-3 text-[10px] leading-relaxed text-[var(--text-muted)]">Default fee adalah alat planning, bukan settlement resmi. Shopee dan Tokopedia memiliki struktur kategori/tier yang dipublikasikan; TikTok Shop, Lazada, dan Blibli tetap dapat berbeda menurut subkategori, status seller, program, dan promo. Gunakan angka Seller Center untuk keputusan final.</p>
+    </section>
+  );
 }
-function Money({label,value,set}:{label:string;value:number;set:(v:number)=>void}){return <label className="min-w-0 text-xs text-[var(--text-secondary)]">{label}<div className="relative mt-1.5"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">Rp</span><input className="w-full min-w-0 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] py-3 pl-9 pr-3 text-base outline-none" inputMode="numeric" type="number" min={0} value={value} onChange={e=>set(Math.max(0,Number(e.target.value)))}/></div></label>}
-function Num({label,value,set}:{label:string;value:number;set:(v:number)=>void}){return <label className="min-w-0 text-[11px] text-[var(--text-secondary)]">{label}<input className="mt-1.5 w-full min-w-0 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-3 text-base outline-none" inputMode="decimal" type="number" min={0} value={value} onChange={e=>set(Number(e.target.value))}/></label>}
-function Metric({label,value}:{label:string;value:string}){return <div className="min-w-0 rounded-xl bg-[var(--surface-2)] p-3"><p className="truncate text-[9px] uppercase tracking-wide text-[var(--text-muted)]">{label}</p><p className="mt-1 break-words text-xs font-semibold tabular-nums sm:text-sm">{value}</p></div>}
+
+function Metric({ label, value }: { label: string; value: string }) { return <div className="min-w-0 rounded-xl bg-[var(--surface-2)] p-2.5"><p className="text-[9px] uppercase tracking-wide text-[var(--text-muted)]">{label}</p><p className="mt-1 break-words text-xs font-semibold tabular-nums sm:text-sm">{value}</p></div>; }
