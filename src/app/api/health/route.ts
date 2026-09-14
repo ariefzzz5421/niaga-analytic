@@ -5,9 +5,16 @@ import { tiktokAuth } from "@/lib/scrape/tiktok-signature";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function hasShopeeOpenPlatformCredentials(): boolean {
+  return ["SHOPEE_PARTNER_ID", "SHOPEE_PARTNER_KEY", "SHOPEE_ACCESS_TOKEN", "SHOPEE_SHOP_ID"].every(
+    (key) => Boolean(process.env[key]?.trim()),
+  );
+}
+
 /**
- * Reports which data routes are wired up, without ever echoing a secret.
- * The UI uses this to decide whether to show the "sample data" banner.
+ * Reports which data routes are configured without ever returning credentials.
+ * Public/competitor analysis and owned-store official APIs are deliberately
+ * reported separately because marketplace seller APIs are authorization scoped.
  */
 export function GET() {
   return Response.json({
@@ -15,10 +22,18 @@ export function GET() {
     transports: availableTransports(),
     live: hasLiveTransport(),
     routes: {
-      shopeeCookie: Boolean(process.env.SHOPEE_COOKIE?.trim()),
-      tiktokOfficialApi: Boolean(tiktokAuth()),
-      apify: hasApify(),
+      publicStorefront: {
+        shopeeSession: Boolean(process.env.SHOPEE_COOKIE?.trim()),
+        apify: hasApify(),
+        gateway: hasLiveTransport(),
+      },
+      ownedStoreOfficialApi: {
+        tiktokShop: Boolean(tiktokAuth()),
+        shopeeCredentialsPresent: hasShopeeOpenPlatformCredentials(),
+        shopeeAdapterStatus: "credentials-scaffolded",
+      },
     },
+    guidance: "Use official APIs for authorised/owned stores; use public storefront transports for competitor analytics.",
     maxProducts: Number(process.env.MAX_PRODUCTS ?? 240),
     cacheTtlSeconds: Number(process.env.CACHE_TTL_SECONDS ?? 900),
   });
