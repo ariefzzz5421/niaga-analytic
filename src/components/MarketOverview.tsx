@@ -8,29 +8,46 @@ import { TOP10_ECOMMERCE_TRAFFIC, TOP10_TRAFFIC_TOTAL_M, TOP4_TRAFFIC_SHARE, typ
 type ViewMode = "share" | "gmv";
 type TrafficMode = "traffic" | "share";
 type MarketId = "shopee" | "tiktok-tokopedia" | "lazada" | "blibli";
-type MarketMember = { id: string; label: string; logo: string; dark?: boolean };
+type MarketMember = { id: string; label: string; logo: string; dark?: boolean; cropTokopedia?: boolean };
 type MarketRow = { id: MarketId; label: string; share: number; gmv: number; accent: string; members: MarketMember[] };
 
 const MARKET: MarketRow[] = [
   { id: "shopee", label: "Shopee", share: 54, gmv: 31.16, accent: "#ee4d2d", members: [{ id: "shopee", label: "Shopee", logo: "/marketplaces/shopee.svg" }] },
-  { id: "tiktok-tokopedia", label: "TikTok Shop + Tokopedia", share: 38, gmv: 21.93, accent: "#20c875", members: [{ id: "tiktok", label: "TikTok Shop", logo: "/marketplaces/tiktok.png", dark: true }, { id: "tokopedia", label: "Tokopedia", logo: "/marketplaces/tokopedia-icon.png" }] },
+  { id: "tiktok-tokopedia", label: "TikTok Shop + Tokopedia", share: 38, gmv: 21.93, accent: "#20c875", members: [{ id: "tiktok", label: "TikTok Shop", logo: "/marketplaces/tiktok.png", dark: true }, { id: "tokopedia", label: "Tokopedia", logo: "/marketplaces/tokopedia.png", cropTokopedia: true }] },
   { id: "lazada", label: "Lazada", share: 6, gmv: 3.46, accent: "#4854d8", members: [{ id: "lazada", label: "Lazada", logo: "https://www.lazada.co.id/favicon.ico" }] },
-  { id: "blibli", label: "Blibli", share: 3, gmv: 1.73, accent: "#159bd7", members: [{ id: "blibli", label: "Blibli", logo: "https://www.blibli.com/favicon.ico" }] },
+  { id: "blibli", label: "Blibli", share: 3, gmv: 1.73, accent: "#159bd7", members: [{ id: "blibli", label: "Blibli", logo: "/marketplaces/blibli.svg" }] },
 ];
 
 const GMV_PLATFORM_CHIPS: Array<MarketMember & { context: string; group: MarketId }> = [
   { id: "shopee", label: "Shopee", logo: "/marketplaces/shopee.svg", context: "54%", group: "shopee" },
   { id: "tiktok", label: "TikTok Shop", logo: "/marketplaces/tiktok.png", dark: true, context: "combined 38%", group: "tiktok-tokopedia" },
-  { id: "tokopedia", label: "Tokopedia", logo: "/marketplaces/tokopedia-icon.png", context: "combined 38%", group: "tiktok-tokopedia" },
+  { id: "tokopedia", label: "Tokopedia", logo: "/marketplaces/tokopedia.png", cropTokopedia: true, context: "combined 38%", group: "tiktok-tokopedia" },
   { id: "lazada", label: "Lazada", logo: "https://www.lazada.co.id/favicon.ico", context: "6%", group: "lazada" },
-  { id: "blibli", label: "Blibli", logo: "https://www.blibli.com/favicon.ico", context: "3%", group: "blibli" },
+  { id: "blibli", label: "Blibli", logo: "/marketplaces/blibli.svg", context: "3%", group: "blibli" },
 ];
 
 function MemberIcon({ member, compact = false }: { member: MarketMember; compact?: boolean }) {
   const size = compact ? "size-7" : "size-9";
+  const initials = member.label.slice(0, 2).toUpperCase();
+
   return (
-    <span className={`${size} grid shrink-0 place-items-center overflow-hidden rounded-xl ${member.dark ? "bg-black" : "bg-white"} p-1 ring-1 ring-[var(--border)]`}>
-      <img src={member.logo} alt={`${member.label} logo`} className="size-full object-contain" />
+    <span className={`${size} relative grid shrink-0 place-items-center overflow-hidden rounded-xl ${member.dark ? "bg-black" : "bg-white"} p-1 ring-1 ring-[var(--border)]`}>
+      <span className="absolute inset-0 grid place-items-center text-[8px] font-bold text-black/35">{initials}</span>
+      {member.cropTokopedia ? (
+        <img
+          src={member.logo}
+          alt={`${member.label} logo`}
+          className="absolute left-1/2 top-0 z-10 h-[145%] w-auto max-w-none -translate-x-1/2 object-contain"
+          onError={(event) => { event.currentTarget.style.display = "none"; }}
+        />
+      ) : (
+        <img
+          src={member.logo}
+          alt={`${member.label} logo`}
+          className="relative z-10 size-full object-contain"
+          onError={(event) => { event.currentTarget.style.display = "none"; }}
+        />
+      )}
     </span>
   );
 }
@@ -39,7 +56,7 @@ function Logo({ row, compact = false }: { row: MarketRow; compact?: boolean }) {
   if (row.members.length === 1) return <MemberIcon member={row.members[0]} compact={compact} />;
   return (
     <span className="flex items-center -space-x-1.5" aria-label={`${row.label} logos`}>
-      {row.members.map((member) => <span key={member.id} className="ring-2 ring-[var(--surface-1)] rounded-xl"><MemberIcon member={member} compact={compact} /></span>)}
+      {row.members.map((member) => <span key={member.id} className="rounded-xl ring-2 ring-[var(--surface-1)]"><MemberIcon member={member} compact={compact} /></span>)}
     </span>
   );
 }
@@ -47,10 +64,21 @@ function Logo({ row, compact = false }: { row: MarketRow; compact?: boolean }) {
 function TrafficLogo({ site, compact = false }: { site: TrafficSite; compact?: boolean }) {
   const box = compact ? "size-7" : "size-10";
   const initials = site.label.slice(0, 2).toUpperCase();
+  const isTokopedia = site.id === "tokopedia";
+
   return (
     <span className={`${box} relative grid shrink-0 place-items-center overflow-hidden rounded-xl bg-white p-1`}>
-      <span className="absolute inset-0 grid place-items-center text-[9px] font-bold text-black/60">{initials}</span>
-      <img src={site.logo} alt={`${site.label} logo`} className="relative z-10 size-full object-contain" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+      <span className="absolute inset-0 grid place-items-center text-[9px] font-bold text-black/40">{initials}</span>
+      {isTokopedia ? (
+        <img
+          src={site.logo}
+          alt={`${site.label} logo`}
+          className="absolute left-1/2 top-0 z-10 h-[145%] w-auto max-w-none -translate-x-1/2 object-contain"
+          onError={(event) => { event.currentTarget.style.display = "none"; }}
+        />
+      ) : (
+        <img src={site.logo} alt={`${site.label} logo`} className="relative z-10 size-full object-contain" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+      )}
     </span>
   );
 }
@@ -105,6 +133,11 @@ export function MarketOverview() {
               ))}
             </div>
           </div>
+
+          <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5">
+            <p className="text-[10px] font-semibold text-[var(--text-primary)]">Why GMV has 4 rows while traffic has 10</p>
+            <p className="mt-1 text-[9px] leading-relaxed text-[var(--text-muted)]">The 2025 Momentum Works Indonesia GMV dataset publishes four platform groups: Shopee; TikTok Shop + Tokopedia combined; Lazada; and Blibli. The Top-10 section below measures organic web traffic, not transaction value, so NIAGA does not invent GMV shares for OLX, Zalora, Orami, K24Klik, Mi.co.id, or iBox.</p>
+          </div>
         </div>
 
         <div className="grid gap-0 lg:grid-cols-[1.08fr_.92fr]">
@@ -142,7 +175,6 @@ export function MarketOverview() {
             </div>
 
             <p className="mb-3 text-center text-[10px] text-[var(--text-muted)]">Hover, tap, or click any slice / marketplace to inspect it.</p>
-
             <div className="flex items-center gap-3"><Logo row={active} /><div><p className="text-xs font-semibold">{active.label}</p><p className="text-[10px] text-[var(--text-muted)]">Indonesia E-Commerce · 2025 estimate</p></div></div>
             <div className="mt-4 grid grid-cols-2 gap-2"><div className="rounded-xl bg-[var(--surface-1)] p-3"><p className="text-[9px] uppercase tracking-wide text-[var(--text-muted)]">GMV share</p><p className="mt-1 text-xl font-semibold">{active.share}%</p></div><div className="rounded-xl bg-[var(--surface-1)] p-3"><p className="text-[9px] uppercase tracking-wide text-[var(--text-muted)]">Est. GMV</p><p className="mt-1 text-xl font-semibold">US${active.gmv.toFixed(2)}B</p></div></div>
 
@@ -153,7 +185,6 @@ export function MarketOverview() {
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">{MARKET.map((row) => <button key={row.id} type="button" onClick={() => setSelected(row.id)} onMouseEnter={() => setSelected(row.id)} className={`flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition ${selected === row.id ? "border-[var(--border-strong)] bg-[var(--surface-1)]" : "border-transparent hover:bg-[var(--surface-1)]"}`}><Logo row={row} compact /><span className="min-w-0"><span className="block truncate text-[10px] font-medium">{row.label}</span><span className="block text-[9px] tabular-nums text-[var(--text-muted)]">{row.share}%</span></span></button>)}</div>
-
             <p className="mt-4 text-[10px] leading-relaxed text-[var(--text-muted)]">Indonesia represented about 36.6% of Southeast Asia&apos;s US$157.6B platform ecommerce GMV in 2025. Published platform percentages are rounded, so the displayed shares total 101%.</p>
             <a href="https://thelowdown.momentum.asia/new-report-southeast-asias-platform-ecommerce-reaches-us157-6b-in-2025-with-top-platforms-expanding-share-to-98-8/" target="_blank" rel="noreferrer noopener" className="mt-4 inline-flex min-h-10 items-center gap-1.5 text-[11px] font-medium text-[var(--text-secondary)] hover:text-white">Momentum Works source <ExternalLink className="size-3" /></a>
           </aside>
