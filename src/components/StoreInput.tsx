@@ -9,8 +9,8 @@ import { PlatformBadge } from "./ui";
 const CHIP_META: Record<Platform, { logo: string; share: string }> = {
   shopee: { logo: "/marketplaces/shopee.svg", share: "54%" },
   tiktok: { logo: "/marketplaces/tiktok.png", share: "38%*" },
-  tokopedia: { logo: "/marketplaces/tokopedia-icon.png", share: "38%*" },
-  blibli: { logo: "https://www.blibli.com/favicon.ico", share: "3%" },
+  tokopedia: { logo: "/marketplaces/tokopedia.png", share: "38%*" },
+  blibli: { logo: "/marketplaces/blibli.svg", share: "3%" },
 };
 
 export function StoreInput({ onSubmit, loading, defaultValue = "" }: { onSubmit: (url: string) => void; loading: boolean; defaultValue?: string }) {
@@ -32,7 +32,9 @@ export function StoreInput({ onSubmit, loading, defaultValue = "" }: { onSubmit:
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="text-[11px] text-[var(--text-muted)]">Try:</span>
         {PLATFORM_LIST.map((meta) => <button key={meta.id} type="button" onClick={() => { setValue(meta.example); if (!loading) onSubmit(meta.example); }} disabled={loading} className="group inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface-1)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-40" title={meta.hint}>
-          <span className={`grid size-6 shrink-0 place-items-center overflow-hidden rounded-md p-0.5 ${meta.id === "tiktok" ? "bg-black" : "bg-white"}`}><img src={CHIP_META[meta.id].logo} alt={`${meta.label} logo`} className="size-full object-contain" /></span>
+          <span className={`relative grid size-6 shrink-0 place-items-center overflow-hidden rounded-md p-0.5 ${meta.id === "tiktok" ? "bg-black" : "bg-white"}`}>
+            {meta.id === "tokopedia" ? <img src={CHIP_META[meta.id].logo} alt={`${meta.label} logo`} className="absolute left-1/2 top-0 h-[145%] w-auto max-w-none -translate-x-1/2 object-contain" /> : <img src={CHIP_META[meta.id].logo} alt={`${meta.label} logo`} className="size-full object-contain" />}
+          </span>
           <span>{meta.label}</span>
           <span className="rounded-full bg-[var(--surface-3)] px-1.5 py-0.5 text-[9px] tabular-nums text-[var(--text-muted)]">{CHIP_META[meta.id].share}</span>
           {meta.flagship ? <span className="rounded bg-[var(--accent-soft)] px-1 text-[9px] uppercase tracking-wide text-[#86b6ef]">full</span> : null}
