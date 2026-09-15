@@ -18,8 +18,8 @@ export function SectionHeading({ eyebrow, title, description }: { eyebrow?: stri
 export function PlatformBadge({ platform, size = "md" }: { platform: Platform; size?: "sm" | "md" }) {
   const meta = PLATFORM_META[platform];
   const pad = size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs";
-  const iconBox = platform === "tokopedia" ? (size === "sm" ? "h-4 w-7" : "h-5 w-8") : (size === "sm" ? "size-4" : "size-5");
-  return <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${pad}`} style={{ borderColor: `${meta.brand}55`, background: `${meta.brand}1a`, color: "var(--text-primary)" }}><span className={`${iconBox} grid shrink-0 place-items-center overflow-hidden rounded-md p-0.5 ${platform === "tiktok" ? "bg-black" : "bg-white"}`}><img src={PLATFORM_LOGO[platform]} alt="" className="h-full w-full object-contain" /></span>{meta.label}</span>;
+  const iconBox = size === "sm" ? "size-4" : "size-5";
+  return <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${pad}`} style={{ borderColor: `${meta.brand}55`, background: `${meta.brand}1a`, color: "var(--text-primary)" }}><span className={`${iconBox} grid shrink-0 place-items-center overflow-hidden rounded-md p-0.5 ${platform === "tiktok" ? "bg-black" : "bg-white"}`}><img src={PLATFORM_LOGO[platform]} alt="" className="size-full object-contain" /></span>{meta.label}</span>;
 }
 
 const SEVERITY_STYLE = { good: { color: "var(--good)", label: "Good" }, warning: { color: "var(--warning)", label: "Watch" }, serious: { color: "var(--serious)", label: "Serious" }, critical: { color: "var(--critical)", label: "Critical" }, neutral: { color: "var(--text-secondary)", label: "Note" } } as const;
