@@ -5,8 +5,8 @@ import type { Platform } from "@/lib/types";
 const PLATFORM_LOGO: Record<Platform, string> = {
   shopee: "/marketplaces/shopee.svg",
   tiktok: "/marketplaces/tiktok.png",
-  tokopedia: "/marketplaces/tokopedia-icon.png",
-  blibli: "https://www.blibli.com/favicon.ico",
+  tokopedia: "/marketplaces/tokopedia.png",
+  blibli: "/marketplaces/blibli.svg",
 };
 
 export function Card({ children, className = "", quiet = false }: { children: ReactNode; className?: string; quiet?: boolean }) { return <div className={`${quiet ? "card-quiet" : "card"} ${className}`}>{children}</div>; }
@@ -19,7 +19,7 @@ export function PlatformBadge({ platform, size = "md" }: { platform: Platform; s
   const meta = PLATFORM_META[platform];
   const pad = size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs";
   const iconBox = size === "sm" ? "size-4" : "size-5";
-  return <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${pad}`} style={{ borderColor: `${meta.brand}55`, background: `${meta.brand}1a`, color: "var(--text-primary)" }}><span className={`${iconBox} grid shrink-0 place-items-center overflow-hidden rounded-md p-0.5 ${platform === "tiktok" ? "bg-black" : "bg-white"}`}><img src={PLATFORM_LOGO[platform]} alt="" className="size-full object-contain" /></span>{meta.label}</span>;
+  return <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${pad}`} style={{ borderColor: `${meta.brand}55`, background: `${meta.brand}1a`, color: "var(--text-primary)" }}><span className={`${iconBox} relative grid shrink-0 place-items-center overflow-hidden rounded-md p-0.5 ${platform === "tiktok" ? "bg-black" : "bg-white"}`}>{platform === "tokopedia" ? <img src={PLATFORM_LOGO[platform]} alt="" className="absolute left-1/2 top-0 h-[145%] w-auto max-w-none -translate-x-1/2 object-contain" /> : <img src={PLATFORM_LOGO[platform]} alt="" className="size-full object-contain" />}</span>{meta.label}</span>;
 }
 
 const SEVERITY_STYLE = { good: { color: "var(--good)", label: "Good" }, warning: { color: "var(--warning)", label: "Watch" }, serious: { color: "var(--serious)", label: "Serious" }, critical: { color: "var(--critical)", label: "Critical" }, neutral: { color: "var(--text-secondary)", label: "Note" } } as const;
