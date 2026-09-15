@@ -10,8 +10,8 @@ export type TrafficSite = {
 
 export const TOP10_ECOMMERCE_TRAFFIC: TrafficSite[] = [
   { rank: 1, id: "shopee", label: "Shopee", trafficM: 53.0, share: 30.7, logo: "/marketplaces/shopee.svg", accent: "#ee4d2d" },
-  { rank: 2, id: "tokopedia", label: "Tokopedia", trafficM: 46.0, share: 26.7, logo: "/marketplaces/tokopedia-icon.png", accent: "#42b549" },
-  { rank: 3, id: "blibli", label: "Blibli", trafficM: 23.0, share: 13.3, logo: "https://www.blibli.com/favicon.ico", accent: "#159bd7" },
+  { rank: 2, id: "tokopedia", label: "Tokopedia", trafficM: 46.0, share: 26.7, logo: "/marketplaces/tokopedia.png", accent: "#42b549" },
+  { rank: 3, id: "blibli", label: "Blibli", trafficM: 23.0, share: 13.3, logo: "/marketplaces/blibli.svg", accent: "#159bd7" },
   { rank: 4, id: "lazada", label: "Lazada", trafficM: 22.0, share: 12.8, logo: "https://www.lazada.co.id/favicon.ico", accent: "#4854d8" },
   { rank: 5, id: "olx", label: "OLX", trafficM: 8.1, share: 4.7, logo: "https://www.olx.co.id/favicon.ico", accent: "#23e5db" },
   { rank: 6, id: "zalora", label: "Zalora", trafficM: 4.5, share: 2.6, logo: "https://www.zalora.co.id/favicon.ico", accent: "#ffffff" },
